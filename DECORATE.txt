@@ -1,0 +1,2 @@
+// Powerups
+#include "Actors/Items/Powerups.dec"

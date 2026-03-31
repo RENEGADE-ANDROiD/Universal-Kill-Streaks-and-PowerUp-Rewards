@@ -1,0 +1,6 @@
+Gameinfo
+{
+	AddEventHandlers = 
+	"KillTracker",
+	"RareItemDropped"
+}

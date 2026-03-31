@@ -1,0 +1,25 @@
+// Powerups
+server bool SpawnTimesphere = true;
+server bool SpawnGuardsphere = true;
+server bool SpawnRegensphere = true;
+server bool SpawnDeflectionsphere = true;
+server bool SpawnElectricsphere = true;
+server bool SpawnLegendsphere = true;
+server bool SpawnCrucifix = true;
+server bool SpawnLifeShieldSphere = true;
+server bool SpawnFamiliar = true;
+
+// Killstreaks
+server bool KSHUD = true;
+server bool KillstreakIsOn = true;
+
+server bool ksLifeShield = true;
+server bool ksCrucifix = true;
+server bool ksCoffee = true;
+server bool ksFamiliar = true;
+server bool ksTimesphere = true;
+server bool ksGuardsphere = true;
+server bool ksRegensphere = true;
+server bool ksDeflectionsphere = true;
+server bool ksElectricsphere = true;
+server bool ksLegendsphere = true;
