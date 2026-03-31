@@ -1,9 +1,9 @@
 ﻿version "4.10"
 
 // KillStreak // 
+#include "zscript/Killstreak/HUDMessage.zs"
 #include "zscript/Killstreak/KSHandler.zc"
 #include "zscript/Killstreak/KillStreak.zc"
-#include "zscript/Killstreak/HUDMessage.zs"
 
 // PowerUps //
 #include "zscript/PowerUps/KillstreakPowerUpSpawner.zs"

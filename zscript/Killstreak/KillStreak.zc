@@ -1,42 +1,66 @@
-class KillStreak : PB_Inventory
-{
+//===========================================================================
+// Universal KillStreak item – uses AUTOACTIVATE + Use() to avoid ambiguous context
+//===========================================================================
 
+class KillStreak : Inventory
+{
     Default
     {
-        //Inventory.PickupMessage "KillStreak Activated!";
         Inventory.MaxAmount 1;
         Inventory.PickupSound "HERELA0";
         +FLOATBOB;
+        +INVENTORY.AUTOACTIVATE;   // Automatically "used" when picked up
         floatbobstrength 1.2;
-        Scale .15;
+        Scale 0.15;
         StencilColor "Yellow";
     }
-  override void DoPickupSpecial(actor toucher)    
-  {
-            if (toucher is "PlayerPawn")
+
+    override bool Use(bool pickup)
+    {
+        if (pickup && Owner && Owner is "PlayerPawn")
+        {
+            let plr = PlayerPawn(Owner);
+            if (plr && !plr.FindInventory("KillStreakActive"))
             {
-                PlayerPawn plr = PlayerPawn(toucher);
-                if (!plr.FindInventory("KillStreakActive"))
+                plr.GiveInventory("KillStreakActive", 1);
+
+                if (KSHUD)
+                {
+                    let handler = EventHandler.Find("PandHUDMessageHandler");
+                    if (handler && handler is "PandHUDMessageHandler")
                     {
-                        plr.GiveInventory("KillStreakActive",1);
-                        PandHUDMessageHandler.PlainMsg(Owner.PlayerNumber(),"BIGFONT2", "\KillStreak Activated!",(240,120),(480,360),time:(0.2,3,0.5), id:11);
-                        // Optionally: play unique sound/message here.
+                        PandHUDMessageHandler.PlainMsg(plr.PlayerNumber(), "BIGFONT2",
+                            "KillStreak Activated!", (240,120), (480,360), time:(0.2,3,0.5), id:11);
                     }
+                    else
+                    {
+                        plr.A_Print("KillStreak Activated!", 2.0);
+                    }
+                }
+                else
+                {
+                    plr.A_Print("KillStreak Activated!", 2.0);
+                }
             }
-            Super.TryPickup(toucher);
-            return;
         }
-        
+        // Return true to consume the item (remove it from inventory)
+        return true;
+    }
+
     States
     {
     Spawn:
         KIST ABCDEFGHIJKLMNOPQRST 2;
         Loop;
     }
-    
-      
 }
+
 class KillStreakActive : Inventory
 {
-    Default { Inventory.MaxAmount 1; +INVENTORY.AUTOACTIVATE; +INVENTORY.HUBPOWER; }
+    Default
+    {
+        Inventory.MaxAmount 1;
+        +INVENTORY.AUTOACTIVATE;
+        +INVENTORY.HUBPOWER;
+    }
 }
