@@ -1,5 +1,5 @@
 //===========================================================================
-// Universal KillStreak item – uses AUTOACTIVATE + Use() to avoid ambiguous context
+// Universal KillStreak item – uses AUTOACTIVATE + Use() for all games
 //===========================================================================
 
 class KillStreak : Inventory
@@ -9,7 +9,7 @@ class KillStreak : Inventory
         Inventory.MaxAmount 1;
         Inventory.PickupSound "HERELA0";
         +FLOATBOB;
-        +INVENTORY.AUTOACTIVATE;   // Automatically "used" when picked up
+        +INVENTORY.AUTOACTIVATE;
         floatbobstrength 1.2;
         Scale 0.15;
         StencilColor "Yellow";
@@ -43,7 +43,6 @@ class KillStreak : Inventory
                 }
             }
         }
-        // Return true to consume the item (remove it from inventory)
         return true;
     }
 

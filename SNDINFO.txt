@@ -1,4 +1,12 @@
-//Killstreak
+// Doom
+DSPLDETH		DSPLDETH
+
+// Heretic
+player/male/death1		PLRDDTH1
+
+// Hexen
+player/death			PLYXDDTH
+
 KillStreak/assasin "SOUNDS/KillStreak/assasin.ogg"
 KillStreak/biggamehunter "SOUNDS/KillStreak/biggamehunter.ogg"
 KillStreak/biohazard "SOUNDS/KillStreak/biohazard.ogg"
@@ -63,7 +71,8 @@ KillStreak/ownage "SOUNDS/KillStreak/ownage.ogg"
 KillStreak/ludicrouskill "SOUNDS/KillStreak/ludicrouskill.ogg"
 KillStreak/wickedsick "SOUNDS/KillStreak/wickedsick.ogg"
 
-//PowerUps//
+// PowerUps //
+
 crucifix/use CRUCIUSE
 DoubleDamage/Activate	DSDUBLON
 DoubleDamage/Deactivate	DSDUBLOF

@@ -1,23 +1,28 @@
 //===========================================================================
-// Universal Killstreak System – No PB classes required
-// Works with any PlayerPawn, PB compatibility via string item names
+// Universal Killstreak System – Doom / Heretic / Hexen
+// Works with any PlayerPawn, no external dependencies
 //===========================================================================
 
 class KillTracker : EventHandler
 {
-    int lastKillCounts[MAXPLAYERS];
+    int currentStreak[MAXPLAYERS];   // kills since last death (streak)
+
+    // Helper to detect current game (inside class)
+    private int GetCurrentGame()
+    {
+        if (GameInfo.GameType & GAME_Doom) return 0;   // Doom
+        if (GameInfo.GameType & GAME_Heretic) return 1; // Heretic
+        if (GameInfo.GameType & GAME_Hexen) return 2;   // Hexen
+        return 0; // fallback
+    }
 
     override void WorldLoaded(WorldEvent e)
     {
         for (int i = 0; i < MAXPLAYERS; i++)
         {
+            currentStreak[i] = 0;
             if (players[i].mo)
-            {
-                lastKillCounts[i] = players[i].killcount;
                 ClearKillstreakTokens(players[i].mo);
-            }
-            else
-                lastKillCounts[i] = 0;
         }
     }
 
@@ -32,14 +37,17 @@ class KillTracker : EventHandler
             if (killer && killer.FindInventory("KillStreakActive"))
             {
                 int pnum = killer.PlayerNumber();
-                int newStreak = lastKillCounts[pnum] + 1;
-                lastKillCounts[pnum] = newStreak;
+                if (pnum >= 0 && pnum < MAXPLAYERS)
+                {
+                    currentStreak[pnum]++;
+                    int streak = currentStreak[pnum];
 
-                String snd = GetStreakSound(newStreak);
-                if (snd != "") killer.A_StartSound(snd, CHAN_AUTO);
+                    String snd = GetStreakSound(streak);
+                    if (snd != "") killer.A_StartSound(snd, CHAN_AUTO);
 
-                if (newStreak % 5 == 0)
-                    GiveKillReward(killer, newStreak);
+                    if (streak % 5 == 0)
+                        GiveKillReward(killer, streak);
+                }
             }
         }
 
@@ -48,9 +56,27 @@ class KillTracker : EventHandler
         {
             PlayerPawn dead = PlayerPawn(e.Thing);
             int pnum = dead.PlayerNumber();
-            lastKillCounts[pnum] = players[pnum].killcount;
-            dead.A_StartSound("DSPLDETH", CHAN_AUTO);
-            ClearKillstreakTokens(dead);
+            if (pnum >= 0 && pnum < MAXPLAYERS)
+            {
+                currentStreak[pnum] = 0;
+
+                // Select death sound based on game
+                String deathSound;
+                switch (GetCurrentGame())
+                {
+                    case 1: // Heretic
+                        deathSound = "player/male/death1";
+                        break;
+                    case 2: // Hexen
+                        deathSound = "player/death";
+                        break;
+                    default:
+                        deathSound = "DSPLDETH";
+                        break;
+                }
+                dead.A_StartSound(deathSound, CHAN_AUTO);
+                ClearKillstreakTokens(dead);
+            }
         }
     }
 
@@ -110,14 +136,11 @@ class KillTracker : EventHandler
 
     void GiveKillReward(PlayerPawn plr, int count)
     {
-        // Try to give PB items (they will be ignored if not defined)
         plr.GiveInventory("KSFreeze", 1);
         plr.GiveInventory("KillStreakPowerUp", 1);
 
-        // Show message using PB's HUD handler if available, else simple print
         if (KSHUD)
         {
-            // Check if PandHUDMessageHandler exists via EventHandler.Find
             let handler = EventHandler.Find("PandHUDMessageHandler");
             if (handler && handler is "PandHUDMessageHandler")
             {
@@ -154,10 +177,6 @@ class KillTracker : EventHandler
     }
 }
 
-//===========================================================================
-// RareItemDropped – spawns a "Killstreak" item once per level
-//===========================================================================
-
 class RareItemDropped : EventHandler
 {
     bool itemDroppedThisLevel;
@@ -175,7 +194,6 @@ class RareItemDropped : EventHandler
 
         if (Random(1, 100) <= 15)
         {
-            // Spawn the Killstreak item at monster's position
             let ks = Actor.Spawn("Killstreak", e.Thing.pos);
             if (ks) itemDroppedThisLevel = true;
         }
