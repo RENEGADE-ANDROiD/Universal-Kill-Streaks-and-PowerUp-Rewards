@@ -130,16 +130,15 @@ class ElectricAuraPower : Powerup
 				array<actor> monsters;
 				actor mon;
 				let it = BlockThingsIterator.Create(owner, arad);
-				while (it.Next())
-				{
-					actor mon = it.thing;
-					mon.A_RemoveLight("ELATL");
-					if (mon && mon.bISMONSTER && !mon.bKILLED && monsters.Find(mon) == monsters.Size() && owner.Distance3D(mon) <= arad  && owner.CheckSight(mon))
-					{
-						monsters.push(mon);
-					}
-				}
-				if (monsters.Size()> 0)
+while (it.Next())
+{
+    actor mon = it.thing;
+    if (mon) mon.A_RemoveLight("ELATL");
+    if (mon && mon.bISMONSTER && !mon.bKILLED && monsters.Find(mon) == monsters.Size() && owner.Distance3D(mon) <= arad && owner.CheckSight(mon))
+    {
+        monsters.push(mon);
+    }
+}				if (monsters.Size()> 0)
 				{
 					int index = random(0,monsters.Size()-1);
 					actor mon = monsters[index];
