@@ -96,6 +96,38 @@ familiar/attack SPIT6 //used for his projectile attack
 familiar/hit FIREDHIT //used when his projectile attack hits
 familiar/throw ARTACT1//used when the summon item is thrown
 familiar/spawn IMPACT3//used when the Familiar spawns from the item
+// Drone familiar (IWAD fallbacks; replace in a merge pk3 with PB drone samples if desired)
+drone/see impsit
+drone/idle impsit
+drone/pain imppai
+drone/die podth3
+drone/fire weapons/plasmaf
+ksDroneExpl weapons/rocklx
+
+// Realm667 powerups (same logical names / paths as PB2022 fold — add matching files under sounds/Realm667Powerups/)
+FireAura/aura       sounds/Realm667Powerups/VFIREAUR.ogg
+FireAura/firedeath  sounds/Realm667Powerups/VFIREDTH.ogg
+firef1              sounds/Realm667Powerups/VFIREF1.ogg
+firef2              sounds/Realm667Powerups/VFIREF2.ogg
+firef3              sounds/Realm667Powerups/VFIREF3.ogg
+firef4              sounds/Realm667Powerups/VFIREF4.ogg
+$random FireAura/fire { firef1 firef2 firef3 firef4 }
+$pitchset FireAura/fire 1.0 1.2
+$limit FireAura/fire 4
+$limit FireAura/firedeath 4
+
+FrostAura/aura      sounds/Realm667Powerups/VFRSTAUR.ogg
+
+Book/Strike         sounds/Realm667Powerups/B_USE.ogg
+B_up1               sounds/Realm667Powerups/B_UP1.ogg
+B_up2               sounds/Realm667Powerups/B_UP2.ogg
+B_up3               sounds/Realm667Powerups/B_UP3.ogg
+B_up4               sounds/Realm667Powerups/B_UP4.ogg
+$random Book/p_pkup { B_up1 B_up2 B_up3 B_up4 }
+
+HandOfTheWraith/Fire sounds/Realm667Powerups/HWTHFIRE.ogg
+Pickups/LichSkull    sounds/Realm667Powerups/LCHSUSE.ogg
+pentacle/project     sounds/Realm667Powerups/PROJECT.ogg
 Shrinksphere/Shrink		DSSHRINK
 Shrinksphere/UnShrink		DSLARGE
 $playersound	mini	male	*death		dsmdeth

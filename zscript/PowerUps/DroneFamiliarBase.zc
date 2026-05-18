@@ -1,0 +1,83 @@
+// PB2022-style kill-streak drone familiar (lifespan + player damage filter).
+// DECORATE: DroneFamiliar : DroneFamiliarBase; death spawns DroneFamiliarBurst.
+
+class DroneFamiliarBase : Actor
+{
+	int familiarLiveTics;
+
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		familiarLiveTics = 0;
+	}
+
+	override void Tick()
+	{
+		Super.Tick();
+		if (health <= 0)
+			return;
+		familiarLiveTics++;
+		if (familiarLiveTics >= 35 * 20)
+			DamageMobj(null, null, health * 10, 'Massacre');
+	}
+
+	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
+	{
+		if (source && source.player)
+			return 0;
+		if (inflictor && inflictor.player)
+			return 0;
+		if (inflictor && inflictor.target && inflictor.target.player)
+			return 0;
+		if (source && source.target && source.target.player)
+			return 0;
+		return Super.DamageMobj(inflictor, source, damage, mod, flags, angle);
+	}
+}
+
+class DroneFamiliarBurst : Actor
+{
+	Default
+	{
+		+NOINTERACTION
+		+NOBLOCKMAP
+		+NOGRAVITY
+		Radius 1;
+		Height 1;
+	}
+
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		double rad = 192;
+		int fullDmg = 88;
+		BlockThingsIterator it = BlockThingsIterator.Create(self, rad);
+		while (it.Next())
+		{
+			Actor mo = it.thing;
+			if (!mo || mo == self)
+				continue;
+			if (!mo.bShootable || mo.health <= 0)
+				continue;
+			if (mo.player)
+				continue;
+			if (!mo.bIsMonster)
+				continue;
+			if (mo.bFriendly)
+				continue;
+			if (mo is "Familiar")
+				continue;
+			if (mo is "DroneFamiliar")
+				continue;
+			double d3 = Distance3D(mo);
+			if (d3 > rad)
+				continue;
+			int dmg = int(fullDmg * (1.0 - d3 / rad) + 8);
+			if (dmg < 8)
+				dmg = 8;
+			mo.DamageMobj(self, master, dmg, 'ExplosiveImpact');
+		}
+		A_PlaySound("ksDroneExpl", CHAN_AUTO);
+		Destroy();
+	}
+}

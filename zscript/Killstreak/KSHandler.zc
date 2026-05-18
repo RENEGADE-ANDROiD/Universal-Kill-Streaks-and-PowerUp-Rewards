@@ -1,201 +1,316 @@
 //===========================================================================
 // Universal Killstreak System – Doom / Heretic / Hexen
-// Works with any PlayerPawn, no external dependencies
 //===========================================================================
 
 class KillTracker : EventHandler
 {
-    int currentStreak[MAXPLAYERS];   // kills since last death (streak)
+	int currentStreak[MAXPLAYERS];
+	int pendingRewardStreak[MAXPLAYERS];
 
-    // Helper to detect current game (inside class)
-    private int GetCurrentGame()
-    {
-        if (GameInfo.GameType & GAME_Doom) return 0;   // Doom
-        if (GameInfo.GameType & GAME_Heretic) return 1; // Heretic
-        if (GameInfo.GameType & GAME_Hexen) return 2;   // Hexen
-        return 0; // fallback
-    }
+	override void WorldLoaded(WorldEvent e)
+	{
+		KSHUDMessageHandler.KS_ClearPendingAll();
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			currentStreak[i] = 0;
+			pendingRewardStreak[i] = 0;
+			if (players[i].mo)
+				ClearKillstreakTokens(players[i].mo);
+		}
+	}
 
-    override void WorldLoaded(WorldEvent e)
-    {
-        for (int i = 0; i < MAXPLAYERS; i++)
-        {
-            currentStreak[i] = 0;
-            if (players[i].mo)
-                ClearKillstreakTokens(players[i].mo);
-        }
-    }
+	override void WorldTick()
+	{
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			if (pendingRewardStreak[i] <= 0) continue;
+			PlayerPawn plr = PlayerPawn(players[i].mo);
+			if (plr && plr.player && KillstreakIsOn && plr.FindInventory("KillStreakActive"))
+				GiveKSReward(plr, pendingRewardStreak[i]);
+			pendingRewardStreak[i] = 0;
+		}
+	}
 
-    override void WorldThingDied(WorldEvent e)
-    {
-        if (!KillstreakIsOn) return;
+	private int GetCurrentGame()
+	{
+		if (GameInfo.GameType & GAME_Doom) return 0;
+		if (GameInfo.GameType & GAME_Heretic) return 1;
+		if (GameInfo.GameType & GAME_Hexen) return 2;
+		return 0;
+	}
 
-        // ----- Monster killed by player -> increase streak -----
-        if (e.Thing && e.Thing.bIsMonster && !(e.Thing is "SwitchableDecoration") && e.Thing.player == null)
-        {
-            PlayerPawn killer = GetKillerPlayer(e);
-            if (killer && killer.FindInventory("KillStreakActive"))
-            {
-                int pnum = killer.PlayerNumber();
-                if (pnum >= 0 && pnum < MAXPLAYERS)
-                {
-                    currentStreak[pnum]++;
-                    int streak = currentStreak[pnum];
+	override void WorldThingDied(WorldEvent e)
+	{
+		if (!KillstreakIsOn) return;
 
-                    String snd = GetStreakSound(streak);
-                    if (snd != "") killer.A_StartSound(snd, CHAN_AUTO);
+		if (e.Thing && e.Thing.bIsMonster && !(e.Thing is "SwitchableDecoration") && e.Thing.player == null)
+		{
+			PlayerPawn killer = GetKillerPlayer(e);
+			if (killer && killer.FindInventory("KillStreakActive"))
+			{
+				int pnum = killer.PlayerNumber();
+				if (pnum >= 0 && pnum < MAXPLAYERS)
+				{
+					currentStreak[pnum]++;
+					int streak = currentStreak[pnum];
 
-                    if (streak % 5 == 0)
-                        GiveKillReward(killer, streak);
-                }
-            }
-        }
+					if (KsAnnouncerEnabled(killer))
+					{
+						String snd = GetStreakSound(streak);
+						if (snd != "")
+						{
+							double avol = KsAnnouncerVolumeMul(killer);
+							if (avol > 0.)
+							{
+								if (!killer.IsActorPlayingSound(CHAN_7))
+									killer.A_StartSound(snd, CHAN_7, 0, avol);
+								else
+									ShowAnnouncerTextFallback(killer, streak);
+							}
+						}
+					}
 
-        // ----- Player died -> reset streak and remove tokens -----
-        if (e.Thing && e.Thing is "PlayerPawn")
-        {
-            PlayerPawn dead = PlayerPawn(e.Thing);
-            int pnum = dead.PlayerNumber();
-            if (pnum >= 0 && pnum < MAXPLAYERS)
-            {
-                currentStreak[pnum] = 0;
+					if (streak % 5 == 0)
+						pendingRewardStreak[pnum] = streak;
+				}
+			}
+		}
 
-                // Select death sound based on game
-                String deathSound;
-                switch (GetCurrentGame())
-                {
-                    case 1: // Heretic
-                        deathSound = "player/male/death1";
-                        break;
-                    case 2: // Hexen
-                        deathSound = "player/death";
-                        break;
-                    default:
-                        deathSound = "DSPLDETH";
-                        break;
-                }
-                dead.A_StartSound(deathSound, CHAN_AUTO);
-                ClearKillstreakTokens(dead);
-            }
-        }
-    }
+		if (e.Thing && e.Thing is "PlayerPawn")
+		{
+			PlayerPawn dead = PlayerPawn(e.Thing);
+			int pnum = dead.PlayerNumber();
+			if (pnum >= 0 && pnum < MAXPLAYERS)
+			{
+				currentStreak[pnum] = 0;
+				pendingRewardStreak[pnum] = 0;
 
-    PlayerPawn GetKillerPlayer(WorldEvent e)
-    {
-        if (e.Inflictor && e.Inflictor is "PlayerPawn")
-            return PlayerPawn(e.Inflictor);
-        if (e.Thing.target && e.Thing.target is "PlayerPawn")
-            return PlayerPawn(e.Thing.target);
-        return null;
-    }
+				String deathSound;
+				switch (GetCurrentGame())
+				{
+				case 1:
+					deathSound = "player/male/death1";
+					break;
+				case 2:
+					deathSound = "player/death";
+					break;
+				default:
+					deathSound = "DSPLDETH";
+					break;
+				}
+				dead.A_StartSound(deathSound, CHAN_AUTO);
+				ClearKillstreakTokens(dead);
+			}
+		}
+	}
 
-    void ClearKillstreakTokens(PlayerPawn plr)
-    {
-        Inventory token;
-        while ((token = plr.FindInventory("KillStreakActive"))) token.Destroy();
-        while ((token = plr.FindInventory("KillStreak"))) token.Destroy();
-    }
+	static bool KsAnnouncerEnabled(PlayerPawn p)
+	{
+		if (!p || !p.player) return true;
+		let c = CVar.GetCVar("ksAnnouncer", p.player);
+		return c == null || c.GetBool();
+	}
 
-    String GetStreakSound(int count)
-    {
-        switch(count)
-        {
-            case 1:  return "KillStreak/firstblood";
-            case 2:  return "KillStreak/doublekill";
-            case 3:  return "KillStreak/triplekill";
-            case 4:  return "KillStreak/gunslinger";
-            case 5:  return "KillStreak/multikill";
-            case 6:  return "KillStreak/rampage";
-            case 7:  return "KillStreak/killingspree";
-            case 8:  return "KillStreak/dominating";
-            case 9:  return "KillStreak/impressive";
-            case 10: return "KillStreak/unstoppable";
-            case 11: return "KillStreak/outstanding";
-            case 12: return "KillStreak/megakill";
-            case 13: return "KillStreak/ultrakill";
-            case 14: return "KillStreak/eagleeye";
-            case 15: return "KillStreak/ownage";
-            case 16: return "KillStreak/comboking";
-            case 17: return "KillStreak/maniac";
-            case 18: return "KillStreak/ludicrouskill";
-            case 19: return "KillStreak/bullseye";
-            case 20: return "KillStreak/excellent";
-            case 21: return "KillStreak/pancake";
-            case 22: return "KillStreak/headhunter";
-            case 23: return "KillStreak/unreal";
-            case 24: return "KillStreak/assasin";
-            case 25: return "KillStreak/wickedsick";
-            case 26: return "KillStreak/massacre";
-            case 27: return "KillStreak/killingmachine";
-            case 28: return "KillStreak/monsterkill";
-            case 29: return "KillStreak/Holyshit";
-            case 30: return "KillStreak/godlike";
-            default: return "";
-        }
-    }
+	static double KsAnnouncerVolumeMul(PlayerPawn p)
+	{
+		if (!p || !p.player) return 1.;
+		let c = CVar.GetCVar("ksAnnouncerVolume", p.player);
+		int v = c ? c.GetInt() : 100;
+		return clamp(v, 0, 100) / 100.;
+	}
 
-    void GiveKillReward(PlayerPawn plr, int count)
-    {
-        plr.GiveInventory("KSFreeze", 1);
-        plr.GiveInventory("KillStreakPowerUp", 1);
+	void ShowAnnouncerTextFallback(PlayerPawn plr, int st)
+	{
+		String cap = StreakAnnouncementCaption(st);
+		if (cap == "") return;
+		if (!KSHUDMessageHandler.UseBigScreenMsgs(plr))
+		{
+			plr.A_Print(cap, 2.0);
+			return;
+		}
+		int pn = plr.PlayerNumber();
+		KSHUDMessageHandler.PlainMsg(pn, "BIGFONT2", cap, (240, 130), (480, 360), -1, (0, 0), Font.CR_WHITE,
+			(0.2, 2.5, 0.4), 0, 14, BaseStatusBar.HUDMSGLayer_OverHUD);
+	}
 
-        if (KSHUD)
-        {
-            let handler = EventHandler.Find("PandHUDMessageHandler");
-            if (handler && handler is "PandHUDMessageHandler")
-            {
-                String msgName = GetStreakName(count);
-                PandHUDMessageHandler.WaggleMsg(plr.PlayerNumber(), "BIGFONT2", msgName,
-                    (240,120), (480,360), time:(0.2,3,0.5), 0.5, 2, id:11);
-                PandHUDMessageHandler.PlainMsg(plr.PlayerNumber(), "CONFONT",
-                    "-  Received: a KillStreak PowerUp!  -", (240,140), (480,360), 0,
-                    color:Font.CR_GOLD, time:(0.2,3,0.5), id:12);
-            }
-            else
-            {
-                plr.A_Print(GetStreakName(count), 2.0);
-            }
-        }
-        else
-        {
-            plr.A_Print(GetStreakName(count), 2.0);
-        }
-    }
+	static String StreakAnnouncementCaption(int killCount)
+	{
+		if (killCount < 1) return "";
+		switch (killCount)
+		{
+		case 1: return "First blood!";
+		case 2: return "Double kill!";
+		case 3: return "Triple kill!";
+		case 4: return "Gunslinger!";
+		case 5: return "Multikill!";
+		case 6: return "Rampage!";
+		case 7: return "Killing spree!";
+		case 8: return "Dominating!";
+		case 9: return "Impressive!";
+		case 10: return "Unstoppable!";
+		case 11: return "Outstanding!";
+		case 12: return "Mega kill!";
+		case 13: return "Ultra kill!";
+		case 14: return "Eagle eye!";
+		case 15: return "Ownage!";
+		case 16: return "Combo king!";
+		case 17: return "Maniac!";
+		case 18: return "Ludicrous kill!";
+		case 19: return "Bullseye!";
+		case 20: return "Excellent!";
+		case 21: return "Pancake!";
+		case 22: return "Head hunter!";
+		case 23: return "Unreal!";
+		case 24: return "Assassin!";
+		case 25: return "Wicked sick!";
+		case 26: return "Massacre!";
+		case 27: return "Killing machine!";
+		case 28: return "Monster kill!";
+		case 29: return "Holy shit!";
+		case 30: return "Godlike!";
+		default: return "Kill streak!";
+		}
+	}
 
-    String GetStreakName(int count)
-    {
-        switch(count)
-        {
-            case 5:  return "MultiKill";
-            case 10: return "Unstoppable";
-            case 15: return "Ownage";
-            case 20: return "Excellent";
-            case 25: return "Wicked Sick";
-            case 30: return "Godlike";
-            default: return "Kill Streak";
-        }
-    }
+	PlayerPawn GetKillerPlayer(WorldEvent e)
+	{
+		if (e.Inflictor && e.Inflictor is "PlayerPawn")
+			return PlayerPawn(e.Inflictor);
+		if (e.Inflictor && e.Inflictor.target && e.Inflictor.target is "PlayerPawn")
+			return PlayerPawn(e.Inflictor.target);
+		if (e.DamageSource && e.DamageSource is "PlayerPawn")
+			return PlayerPawn(e.DamageSource);
+		if (e.Thing && e.Thing.target && e.Thing.target is "PlayerPawn")
+			return PlayerPawn(e.Thing.target);
+		return null;
+	}
+
+	void ClearKillstreakTokens(Actor who)
+	{
+		if (!who) return;
+		if (who is "PlayerPawn")
+			KSHUDMessageHandler.KS_ClearPendingForPlayer(PlayerPawn(who));
+		Inventory token;
+		while ((token = who.FindInventory("KillStreakActive"))) token.Destroy();
+		while ((token = who.FindInventory("KillStreak"))) token.Destroy();
+	}
+
+	String GetStreakSound(int count)
+	{
+		switch (count)
+		{
+		case 1:  return "KillStreak/firstblood";
+		case 2:  return "KillStreak/doublekill";
+		case 3:  return "KillStreak/triplekill";
+		case 4:  return "KillStreak/gunslinger";
+		case 5:  return "KillStreak/multikill";
+		case 6:  return "KillStreak/rampage";
+		case 7:  return "KillStreak/killingspree";
+		case 8:  return "KillStreak/dominating";
+		case 9:  return "KillStreak/impressive";
+		case 10: return "KillStreak/unstoppable";
+		case 11: return "KillStreak/outstanding";
+		case 12: return "KillStreak/megakill";
+		case 13: return "KillStreak/ultrakill";
+		case 14: return "KillStreak/eagleeye";
+		case 15: return "KillStreak/ownage";
+		case 16: return "KillStreak/comboking";
+		case 17: return "KillStreak/maniac";
+		case 18: return "KillStreak/ludicrouskill";
+		case 19: return "KillStreak/bullseye";
+		case 20: return "KillStreak/excellent";
+		case 21: return "KillStreak/pancake";
+		case 22: return "KillStreak/headhunter";
+		case 23: return "KillStreak/unreal";
+		case 24: return "KillStreak/assasin";
+		case 25: return "KillStreak/wickedsick";
+		case 26: return "KillStreak/massacre";
+		case 27: return "KillStreak/killingmachine";
+		case 28: return "KillStreak/monsterkill";
+		case 29: return "KillStreak/Holyshit";
+		case 30: return "KillStreak/godlike";
+		default: return "";
+		}
+	}
+
+	void GiveKSReward(PlayerPawn plr, int count)
+	{
+		String rewardClass, rewardMsg;
+		KillStreakPowerUp.RollKillstreakReward(plr, rewardClass, rewardMsg);
+
+		if (rewardClass == "")
+		{
+			if (!KSHUDMessageHandler.UseBigScreenMsgs(plr))
+			{
+				plr.A_Print(StreakMilestoneTitle(count), 2.0);
+				return;
+			}
+			KSHUDMessageHandler.WaggleMsg(plr.PlayerNumber(), "BIGFONT2", StreakMilestoneTitle(count),
+				(240, 120), (480, 360), -1, (0, 0), Font.CR_UNTRANSLATED,
+				(0.2, 3, 0.5), 0.5, 2.0, 1.0, 0, 11, BaseStatusBar.HUDMSGLayer_OverHUD);
+			return;
+		}
+
+		plr.GiveInventory("KSFreeze", 1);
+		KSHUDMessageHandler.KS_SetPendingReward(plr, rewardClass, rewardMsg);
+		plr.GiveInventory("KillStreakPowerUp", 1);
+
+		if (!KSHUDMessageHandler.UseBigScreenMsgs(plr))
+		{
+			plr.A_Print(StreakMilestoneTitle(count), 2.0);
+			plr.A_Print(rewardMsg, 2.0);
+			return;
+		}
+		KSHUDMessageHandler.WaggleMsg(plr.PlayerNumber(), "BIGFONT2", StreakMilestoneTitle(count),
+			(240, 120), (480, 360), -1, (0, 0), Font.CR_UNTRANSLATED,
+			(0.2, 3, 0.5), 0.5, 2.0, 1.0, 0, 11, BaseStatusBar.HUDMSGLayer_OverHUD);
+		KSHUDMessageHandler.PlainMsg(plr.PlayerNumber(), "BIGFONT2", rewardMsg,
+			(240, 154), (480, 360), -1, (0, 0), Font.CR_WHITE,
+			(0.2, 3, 0.5), 0, 12, BaseStatusBar.HUDMSGLayer_OverHUD);
+	}
+
+	String StreakMilestoneTitle(int c)
+	{
+		switch (c)
+		{
+		case 5:  return "Multikill!";
+		case 10: return "Unstoppable!!";
+		case 15: return "Rampage!!!";
+		case 20: return "Dominating!!";
+		case 25: return "WICKED SICK";
+		case 30: return "GODLIKE";
+		}
+		return "Kill Streak!";
+	}
 }
 
 class RareItemDropped : EventHandler
 {
-    bool itemDroppedThisLevel;
+	bool itemDroppedThisLevel;
 
-    override void WorldLoaded(WorldEvent e)
-    {
-        itemDroppedThisLevel = false;
-    }
+	override void WorldLoaded(WorldEvent e)
+	{
+		itemDroppedThisLevel = false;
+	}
 
-    override void WorldThingDied(WorldEvent e)
-    {
-        if (!KillstreakIsOn) return;
-        if (itemDroppedThisLevel) return;
-        if (!e.Thing || !e.Thing.bIsMonster) return;
+	override void WorldThingDied(WorldEvent e)
+	{
+		if (!KillstreakIsOn) return;
+		if (itemDroppedThisLevel) return;
+		if (!e.Thing || !e.Thing.bIsMonster) return;
+		if (e.Thing is "SwitchableDecoration") return;
 
-        if (Random(1, 100) <= 15)
-        {
-            let ks = Actor.Spawn("Killstreak", e.Thing.pos);
-            if (ks) itemDroppedThisLevel = true;
-        }
-    }
+		let cRare = CVar.FindCVar("ksRareOnMap");
+		if (cRare != null && !cRare.GetBool()) return;
+
+		let cChance = CVar.FindCVar("ksRareChance");
+		int chance = cChance ? cChance.GetInt() : 15;
+		chance = clamp(chance, 0, 100);
+		if (random(1, 100) > chance) return;
+
+		Class<Actor> ksCls = "Killstreak";
+		if (!ksCls) return;
+		if (Actor.Spawn(ksCls, e.Thing.Vec3Offset(0, 0, 8)) != null)
+			itemDroppedThisLevel = true;
+	}
 }

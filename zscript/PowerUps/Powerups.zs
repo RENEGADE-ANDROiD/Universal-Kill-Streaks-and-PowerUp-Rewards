@@ -6,8 +6,8 @@ class PowerDeflect : Powerup
 	
 	Default
 	{
-		Powerup.Duration -30;
-		Powerup.Color "ff 80 00", 0.015;
+		Powerup.Duration -15;
+		Powerup.Color "ff 80 00", 0.002;
 	}
 	
 	override void InitEffect ()
@@ -70,8 +70,8 @@ Class ElectricAuraSphere : PowerupGiver
 		+INVENTORY.BIGPOWERUP;
 		Inventory.MaxAmount 0;
 		Powerup.Type "ElectricAuraPower";
-		Powerup.Duration -30;
-		Powerup.Color "FFFF00", 0.015;
+		Powerup.Duration -15;
+		Powerup.Color "FFFF00", 0.002;
 		Inventory.PickupMessage "Electric Aura! Summons an Electric Field that Stuns Nearby Enemies in Area";
 	}
 	States
@@ -171,11 +171,11 @@ class ElectricAuraPower : Powerup
     {
         super.InitEffect();
 
-        arad = 120;   // smaller radius (original was 384)
+        arad = 160;
 
         if (owner)
         {
-            owner.A_StartSound("ElectricAura/aura", 22243, CHANF_LOOPING | ATTN_NONE);
+            owner.A_StartSound("ElectricAura/aura", CHAN_BODY, CHANF_LOOPING, 1.0, ATTN_NONE);
             owner.A_AttachLight("ELAL1", DynamicLight.PulseLight, "FFFFFF", arad * 0.1, arad * 0.2,
                 flags: DYNAMICLIGHT.LF_NOSHADOWMAP,
                 ofs: (0, 0, owner.height), param: 2.5);
@@ -272,7 +272,7 @@ class ElectricAuraPower : Powerup
         {
             owner.A_RemoveLight("ELAL1");
             owner.A_RemoveLight("ELAL2");
-            owner.A_StopSound(22243);
+            owner.A_StopSound(CHAN_BODY);
         }
         super.EndEffect();
     }

@@ -1,2 +1,4 @@
 // Powerups
 #include "Actors/Items/Powerups.dec"
+#include "Actors/Items/Realm667Powerups/Realm667Powerups.dec"
+#include "Actors/Items/DroneFamiliar.dec"

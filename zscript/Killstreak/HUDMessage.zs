@@ -15,7 +15,7 @@ Class PandHUDMessage : HUDMessageBase
 		if ( balign.x < 0 ) base.x = pos.x;
 		else if ( balign.x > 0 ) base.x = pos.x-bsize.x;
 		else base.x = pos.x-bsize.x/2.0;
-		if ( balign.y < 0 ) base.x = pos.y;
+		if ( balign.y < 0 ) base.y = pos.y;
 		else if ( balign.y > 0 ) base.y = pos.y-bsize.y;
 		else base.y = pos.y-bsize.y/2.0;
 		return base;
@@ -34,7 +34,8 @@ Class PandHUDMessage : HUDMessageBase
 		if ( visibility & layer ) return;
 		if ( targetplayer > -1 && targetplayer != consoleplayer ) return;
 		Vector2 base = CalculateBoxAlignment();
-		if ( !lines ) Setup();
+		if ( !rFont || !lines ) Setup();
+		if ( !rFont || !lines ) return;
 		double linex, liney = base.y, len;
 		String line;
 		for ( int i=0; i<lines.Count(); i++ )
@@ -87,6 +88,7 @@ Class PandHUDMessage : HUDMessageBase
 	virtual void Setup()
 	{
 		rFont = Font.GetFont(fnt);
+		if (!rFont) return;
 		lines = rFont.BreakLines(txt,(wrap<=0)?int.max:wrap);
 		double longest = 0, len;
 		for ( int i=0; i<lines.Count(); i++ )
@@ -242,17 +244,92 @@ Class Pand_QueuedMsgWaggle : Pand_QueuedMsg
 // this event handler serves as a proxy between play and ui for adding messages
 // [MC] Note for Time: It's a Vector3. X = fade in, Y = hold time, Z = fade out time.
 // This is all added together to make the total time.
-Class PandHUDMessageHandler : EventHandler
+Class KSHUDMessageHandler : EventHandler
 {
 	Array <Pand_QueuedMsg> queue;
+	String ksPendingClass[MAXPLAYERS];
+	String ksPendingMsg[MAXPLAYERS];
+	bool ksPendingSet[MAXPLAYERS];
+
+	static KSHUDMessageHandler Instance()
+	{
+		return KSHUDMessageHandler(EventHandler.Find("KSHUDMessageHandler"));
+	}
+
+	// KSHUD server cvar + ksBigHudMsg user cvar (PB2022 pb_ks_bigmsg equivalent)
+	static bool UseBigScreenMsgs(PlayerPawn p)
+	{
+		if (!KSHUD) return false;
+		if (!p || !p.player)
+		{
+			let c = CVar.FindCVar("ksBigHudMsg");
+			return c == null || c.GetBool();
+		}
+		let c = CVar.GetCVar("ksBigHudMsg", p.player);
+		return c == null || c.GetBool();
+	}
+
+	static play void KS_SetPendingReward(PlayerPawn plr, String className, String msg)
+	{
+		let h = Instance();
+		if (!h || !plr || !plr.player) return;
+		int p = plr.PlayerNumber();
+		if (p < 0 || p >= MAXPLAYERS) return;
+		h.ksPendingClass[p] = className;
+		h.ksPendingMsg[p] = msg;
+		h.ksPendingSet[p] = true;
+	}
+
+	static void KS_ClearPendingAll()
+	{
+		let h = Instance();
+		if (!h) return;
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			h.ksPendingSet[i] = false;
+			h.ksPendingClass[i] = "";
+			h.ksPendingMsg[i] = "";
+		}
+	}
+
+	static void KS_ClearPendingForPlayer(PlayerPawn plr)
+	{
+		let h = Instance();
+		if (!h || !plr || !plr.player) return;
+		int p = plr.PlayerNumber();
+		if (p < 0 || p >= MAXPLAYERS) return;
+		h.ksPendingSet[p] = false;
+		h.ksPendingClass[p] = "";
+		h.ksPendingMsg[p] = "";
+	}
+
+	static play void KS_TakePending(PlayerPawn plr, out String className, out String msg, out bool had)
+	{
+		className = "";
+		msg = "";
+		had = false;
+		let h = Instance();
+		if (!h || !plr || !plr.player) return;
+		int p = plr.PlayerNumber();
+		if (p < 0 || p >= MAXPLAYERS || !h.ksPendingSet[p]) return;
+		className = h.ksPendingClass[p];
+		msg = h.ksPendingMsg[p];
+		h.ksPendingSet[p] = false;
+		h.ksPendingClass[p] = "";
+		h.ksPendingMsg[p] = "";
+		had = true;
+	}
 
 	override void PostUiTick()
 	{
 		if(!KSHUD) return;
 		// load 'em up
 		for ( int i=0; i<queue.size(); i++ )
+		{
+			if (!queue[i]) continue;
 			if ( queue[i].timestamp >= gametic )
 				queue[i].AddSelf();
+		}
 	}
 
 	override void WorldTick()
@@ -260,6 +337,12 @@ Class PandHUDMessageHandler : EventHandler
 		if(!KSHUD) return;
 		for ( int i=0; i<queue.size(); i++ )
 		{
+			if (!queue[i])
+			{
+				queue.Delete(i);
+				i--;
+				continue;
+			}
 			if ( queue[i].timestamp >= gametic ) continue;
 			queue.Delete(i);
 			i--;
@@ -268,7 +351,7 @@ Class PandHUDMessageHandler : EventHandler
 
 	static play void QueueMsg( Pand_QueuedMsg tosend )
 	{
-		PandHUDMessageHandler local = PandHUDMessageHandler(Find("PandHUDMessageHandler"));
+		KSHUDMessageHandler local = KSHUDMessageHandler(Find("KSHUDMessageHandler"));
 		if ( !local ) return;
 		local.queue.Push(tosend);
 	}
@@ -286,21 +369,19 @@ Class PandHUDMessageHandler : EventHandler
 	
 	static bool CheckFont( Name fnt )
 	{
-		Font f = Font.GetFont(fnt);
-		if (!f)	Console.Printf("%s is not a font!", fnt);
-		return (f != null);
+		return Font.GetFont(fnt) != null;
 	}
 
 	static void PlainMsg(int targetplayer, Name fnt, string txt, Vector2 pos, Vector2 vsize = (0,0), int talign = -1, Vector2 balign = (0,0), int color = Font.CR_UNTRANSLATED, Vector3 time = (0,0,0), int wrap = 0, uint id = 0, int layer = BaseStatusBar.HUDMSGLayer_OverHUD )
 	{
-		if (!PandHUDMessageHandler.CheckFont(fnt))	return;
+		if (!KSHUDMessageHandler.CheckFont(fnt))	return;
 		Pand_QueuedMsg tosend = PandHUDMessage.Create(targetplayer,fnt,txt,pos,vsize,talign,balign,color,time,wrap,id,layer);
 		QueueMsg(tosend);
 	}
 
 	static void WaggleMsg(int targetplayer, Name fnt, string txt, Vector2 pos, Vector2 vsize = (0,0), int talign = -1, Vector2 balign = (0,0), int color = Font.CR_UNTRANSLATED, Vector3 time = (0,0,0), double speed = 1.0, double strength = 1.0, double frequency = 1.0, int wrap = 0, uint id = 0, int layer = BaseStatusBar.HUDMSGLayer_OverHUD )
 	{
-		if (!PandHUDMessageHandler.CheckFont(fnt))	return;
+		if (!KSHUDMessageHandler.CheckFont(fnt))	return;
 		Pand_QueuedMsg tosend = PandHUDMessageWaggle.Create(targetplayer,fnt,txt,pos,vsize,talign,balign,color,time,speed,strength,frequency,wrap,id,layer);
 		QueueMsg(tosend);
 	}

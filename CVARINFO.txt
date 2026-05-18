@@ -17,9 +17,32 @@ server bool ksLifeShield = true;
 server bool ksCrucifix = true;
 server bool ksCoffee = true;
 server bool ksFamiliar = true;
+server bool ksDroneFamiliar = false;
 server bool ksTimesphere = true;
 server bool ksGuardsphere = true;
 server bool ksRegensphere = true;
 server bool ksDeflectionsphere = true;
 server bool ksElectricsphere = true;
 server bool ksLegendsphere = true;
+
+server bool ksRewardBootsNorth = true;
+server bool ksRewardBracersForce = true;
+server bool ksRewardBookDead = true;
+server bool ksRewardFireAura = true;
+server bool ksRewardFlightSphere = true;
+server bool ksRewardFrostAura = true;
+server bool ksRewardWraithHand = true;
+server bool ksRewardLichSkull = true;
+server bool ksRewardPentacle = true;
+server bool ksRewardReflector = true;
+
+// Kill streak — player preferences
+user bool ksBigHudMsg = true;
+user bool ksAnnouncer = true;
+user int ksAnnouncerVolume = 100;
+user bool ksRareOnMap = true;
+user int ksRareChance = 15;
+user bool ksRewardHasteSphere = true;
+user bool ksRewardDoubleSphere = true;
+user bool ksRewardInvulnSphere = true;
+user bool ksRewardAmmoSphere = true;

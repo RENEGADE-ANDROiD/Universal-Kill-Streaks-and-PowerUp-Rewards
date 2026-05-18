@@ -1,6 +1,7 @@
 Gameinfo
 {
 	AddEventHandlers = 
+	"KSHUDMessageHandler",
 	"KillTracker",
 	"RareItemDropped"
 }

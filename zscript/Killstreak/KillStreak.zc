@@ -24,23 +24,11 @@ class KillStreak : Inventory
             {
                 plr.GiveInventory("KillStreakActive", 1);
 
-                if (KSHUD)
-                {
-                    let handler = EventHandler.Find("PandHUDMessageHandler");
-                    if (handler && handler is "PandHUDMessageHandler")
-                    {
-                        PandHUDMessageHandler.PlainMsg(plr.PlayerNumber(), "BIGFONT2",
-                            "KillStreak Activated!", (240,120), (480,360), time:(0.2,3,0.5), id:11);
-                    }
-                    else
-                    {
-                        plr.A_Print("KillStreak Activated!", 2.0);
-                    }
-                }
+                if (KSHUDMessageHandler.UseBigScreenMsgs(plr) && EventHandler.Find("KSHUDMessageHandler"))
+                    KSHUDMessageHandler.PlainMsg(plr.PlayerNumber(), "BIGFONT2",
+                        "KillStreak Activated!", (240,120), (480,360), time:(0.2,3,0.5), id:11);
                 else
-                {
                     plr.A_Print("KillStreak Activated!", 2.0);
-                }
             }
         }
         return true;

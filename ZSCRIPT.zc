@@ -2,9 +2,12 @@
 
 // KillStreak // 
 #include "zscript/Killstreak/HUDMessage.zs"
+#include "zscript/Killstreak/KS_PowerTimeSlow.zc"
+#include "zscript/PowerUps/KillstreakPowerUpSpawner.zs"
 #include "zscript/Killstreak/KSHandler.zc"
 #include "zscript/Killstreak/KillStreak.zc"
 
 // PowerUps //
-#include "zscript/PowerUps/KillstreakPowerUpSpawner.zs"
+#include "zscript/PowerUps/DroneFamiliarBase.zc"
 #include "zscript/PowerUps/Powerups.zs"
+#include "zscript/PowerUps/Realm667Powerups.zs"
