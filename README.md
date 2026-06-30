@@ -20,9 +20,6 @@ This add-on gives **Doom** and **Doom II**-style games **kill streak shout-outs*
 4. **More orbs in maps (optional)**  
    A separate set of switches controls which **new** orb pickups this mod is allowed to place in levels. That is **not** the same list as the five-kill gift; you can mix and match.
 
-5. **Two familiar styles (optional)**  
-   There is a **classic** helper and an optional **drone-style** helper. The drone reward is **off by default**; turn it on in the reward-pool menu if you want it in the five-kill roll.
-
 ---
 
 ## Quick start
