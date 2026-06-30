@@ -95,14 +95,17 @@ familiar/howl FIRED2 //used for poison/electric pain
 familiar/attack SPIT6 //used for his projectile attack
 familiar/hit FIREDHIT //used when his projectile attack hits
 familiar/throw ARTACT1//used when the summon item is thrown
-familiar/spawn IMPACT3//used when the Familiar spawns from the item
-// Drone familiar (IWAD fallbacks; replace in a merge pk3 with PB drone samples if desired)
-drone/see impsit
-drone/idle impsit
-drone/pain imppai
-drone/die podth3
-drone/fire weapons/plasmaf
-ksDroneExpl weapons/rocklx
+familiar/spawn IMPACT3//used when the RoboDog spawns from the item
+// RoboDog companion (Sergeant_Mark_IV / RENEGADE-ANDROiD)
+$random DogAttack { DOGAT1 DOGAT2 }
+DOGAT1 sounds/RoboDog/DOGAT1
+DOGAT2 sounds/RoboDog/DOGAT2
+DOGAT3 sounds/RoboDog/DOGAT3
+DOGAT4 sounds/RoboDog/DOGAT4
+$alias DogPain DOGPAI
+DOGPAI sounds/RoboDog/DOGPAI
+DOGDIE sounds/RoboDog/DOGDIE
+$alias Plasma/BeepQuiet weapons/switch
 
 // Realm667 powerups (same logical names / paths as PB2022 fold — add matching files under sounds/Realm667Powerups/)
 FireAura/aura       sounds/Realm667Powerups/VFIREAUR.ogg

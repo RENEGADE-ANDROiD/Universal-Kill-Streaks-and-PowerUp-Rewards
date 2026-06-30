@@ -1,4 +1,6 @@
 // Powerups
+#include "Actors/Items/KillstreakSpheres.dec"
+#include "Actors/Items/RoboDogSupport.dec"
+#include "Actors/Items/KS_RoboDogFamiliar.dec"
 #include "Actors/Items/Powerups.dec"
 #include "Actors/Items/Realm667Powerups/Realm667Powerups.dec"
-#include "Actors/Items/DroneFamiliar.dec"

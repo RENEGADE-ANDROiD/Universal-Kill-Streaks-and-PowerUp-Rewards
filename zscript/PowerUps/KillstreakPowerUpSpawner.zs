@@ -32,7 +32,6 @@ class KillStreakPowerUp : Inventory replaces MegaSphere
 		PushIf(pool, "ksCoffee", "CoffeeTime", plr);
 		PushIf(pool, "ksTimesphere", "TFST", plr);
 		PushIf(pool, "ksFamiliar", "FamiliarSummon", plr);
-		PushIf(pool, "ksDroneFamiliar", "DroneSummon", plr);
 		PushIf(pool, "ksGuardsphere", "GuardsphereST", plr);
 		PushIf(pool, "ksCrucifix", "Crucifix", plr);
 		PushIf(pool, "ksRegensphere", "RegenSphere", plr);
@@ -70,8 +69,7 @@ class KillStreakPowerUp : Inventory replaces MegaSphere
 		if (pick == "AmmoSphere") return "Kill streak: Infinite ammo!";
 		if (pick == "CoffeeTime") return "Kill streak: Coffee time!";
 		if (pick == "TFST") return "Kill streak: Time sphere!";
-		if (pick == "FamiliarSummon") return "Kill streak: Familiar summon!";
-		if (pick == "DroneSummon") return "Kill streak: Drone familiar!";
+		if (pick == "FamiliarSummon") return "Kill streak: RoboDog companion!";
 		if (pick == "GuardsphereST") return "Kill streak: Guard sphere!";
 		if (pick == "Crucifix") return "Kill streak: Crucifix!";
 		if (pick == "RegenSphere") return "Kill streak: Regen sphere!";

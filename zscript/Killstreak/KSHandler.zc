@@ -26,7 +26,10 @@ class KillTracker : EventHandler
 			if (pendingRewardStreak[i] <= 0) continue;
 			PlayerPawn plr = PlayerPawn(players[i].mo);
 			if (plr && plr.player && KillstreakIsOn && plr.FindInventory("KillStreakActive"))
+			{
 				GiveKSReward(plr, pendingRewardStreak[i]);
+				KS_KillstreakThrottleHandler.OnRewardGranted(i);
+			}
 			pendingRewardStreak[i] = 0;
 		}
 	}
@@ -51,10 +54,11 @@ class KillTracker : EventHandler
 				int pnum = killer.PlayerNumber();
 				if (pnum >= 0 && pnum < MAXPLAYERS)
 				{
+					KS_KillstreakThrottleHandler.RegisterKillForPlayer(pnum);
 					currentStreak[pnum]++;
 					int streak = currentStreak[pnum];
 
-					if (KsAnnouncerEnabled(killer))
+					if (KsAnnouncerEnabled(killer) && KS_KillstreakThrottleHandler.ShouldPlayAnnouncer(pnum))
 					{
 						String snd = GetStreakSound(streak);
 						if (snd != "")
@@ -70,7 +74,7 @@ class KillTracker : EventHandler
 						}
 					}
 
-					if (streak % 5 == 0)
+					if (KS_KillstreakThrottleHandler.ShouldQueueReward(pnum, streak))
 						pendingRewardStreak[pnum] = streak;
 				}
 			}
@@ -307,6 +311,7 @@ class RareItemDropped : EventHandler
 		int chance = cChance ? cChance.GetInt() : 15;
 		chance = clamp(chance, 0, 100);
 		if (random(1, 100) > chance) return;
+		if (!KS_KillstreakThrottleHandler.ShouldRollRareFlare()) return;
 
 		Class<Actor> ksCls = "Killstreak";
 		if (!ksCls) return;

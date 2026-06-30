@@ -17,7 +17,6 @@ server bool ksLifeShield = true;
 server bool ksCrucifix = true;
 server bool ksCoffee = true;
 server bool ksFamiliar = true;
-server bool ksDroneFamiliar = false;
 server bool ksTimesphere = true;
 server bool ksGuardsphere = true;
 server bool ksRegensphere = true;

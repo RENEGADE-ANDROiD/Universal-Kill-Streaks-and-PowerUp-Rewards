@@ -1,0 +1,72 @@
+// Standalone kill-streak sphere rewards (no PB HasteSphere / DoubleSphere parents).
+
+ACTOR PowerDoubleDamage : PowerDamage
+{
+	DamageFactor "Normal", 2.0
+	DamageFactor "Melee",  2.0
+	DamageFactor "Fire",   2.0
+	DamageFactor "Ice",    2.0
+}
+
+Actor KS_KSHasteSphere : PowerupGiver
+{
+	Game Doom
+	Inventory.PickupMessage "Kill streak: Haste!"
+	Inventory.MaxAmount 0
+	Powerup.Duration -15
+	Powerup.Color "FF FF 00", 0.002
+	Powerup.Type Speed
+	-COUNTITEM
+	+FloatBob
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	Inventory.PickupSound "misc/p_pkup"
+	States
+	{
+	Spawn:
+		HAST ABCD 6 Bright
+		Loop
+	}
+}
+
+Actor KS_KSDoubleSphere : PowerupGiver
+{
+	-COUNTITEM
+	+FloatBob
+	+NOGRAVITY
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	Inventory.MaxAmount 0
+	Powerup.Type "PowerDoubleDamage"
+	Powerup.Duration -15
+	Powerup.Color 255, 0, 255, 0.002
+	Inventory.PickupMessage "Kill streak: Double damage!"
+	Inventory.PickupSound "misc/p_pkup"
+	States
+	{
+	Spawn:
+		MEGA ABCD 6 Bright
+		Loop
+	}
+}
+
+Actor KS_KSInvulnerabilitySphere : PowerupGiver
+{
+	Game Doom
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	+INVENTORY.BIGPOWERUP
+	+FloatBob
+	Inventory.MaxAmount 0
+	Powerup.Type Invulnerable
+	Powerup.Duration -15
+	Powerup.Color White, 0.002
+	Inventory.PickupMessage "Kill streak: Invulnerability!"
+	Inventory.PickupSound "misc/p_pkup"
+	States
+	{
+	Spawn:
+		PINV ABCD 6 Bright
+		Loop
+	}
+}

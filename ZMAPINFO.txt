@@ -2,6 +2,9 @@ Gameinfo
 {
 	AddEventHandlers = 
 	"KSHUDMessageHandler",
+	"KS_KillstreakThrottleHandler",
+	"KS_RoboDogFamiliarHandler",
+	"KS_PlayerTokenHandler",
 	"KillTracker",
 	"RareItemDropped"
 }
