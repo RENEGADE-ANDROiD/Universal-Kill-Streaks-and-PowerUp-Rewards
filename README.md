@@ -38,7 +38,7 @@ This add-on gives **Doom** and **Doom II**-style games **kill streak shout-outs*
 - Short boosts: haste, double damage, invulnerability, infinite ammo, coffee speed-up, slow-motion time sphere  
 - Extra orbs: guard, crucifix, regen, deflection, lifeshield, electric aura, “can’t die below 1 HP” legend sphere  
 - **Realm667-style** extra rewards in the five-kill pool (boots, bracers, book, fire/frost auras, flight, wraith hand, lich skull, pentacle, reflector)  
-- **Classic** familiar summon and optional **drone** familiar summon  
+- Custom **RoboDog** familiar summon  
 - Voice pack for streak lines; light **power-up tint** on these pickups (`Powerup.Color` blend alpha **0.002** where a tint is defined)  
 - A soft gold glow on the streak globe  
 
